@@ -1,28 +1,35 @@
 import os
-from dotenv import load_dotenv
-
-# .env 파일 로드
-load_dotenv()
-
 
 class Config:
-    """애플리케이션 설정 클래스"""
+    """기본 설정 클래스"""
+    SECRET_KEY = os.getenv('SECRET_KEY', 'my_precious_secret_key')
+    DEBUG = False
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 최대 16MB 업로드 제한
+    ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp'}
 
-    # 기본 경로 설정
-    BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    STATIC_FOLDER = os.path.join(BASE_DIR, 'static')
-    UPLOAD_FOLDER = os.path.join(STATIC_FOLDER, 'uploads')
-    QR_FOLDER = os.path.join(STATIC_FOLDER, 'qrcodes')
 
-    # 서버 설정
-    SERVER_DOMAIN = os.getenv('SERVER_DOMAIN', 'http://localhost:5000')
+class DevelopmentConfig(Config):
+    """개발 환경 설정"""
+    DEBUG = True
 
-    # 파일 업로드 설정
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 최대 16MB 파일 업로드 제한
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-    # 보안 설정
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+class TestingConfig(Config):
+    """테스트 환경 설정"""
+    DEBUG = True
+    TESTING = True
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'test_uploads')
 
-    # 디버그 모드
-    DEBUG = os.getenv('FLASK_DEBUG', '0') == '1'
+
+class ProductionConfig(Config):
+    """운영 환경 설정"""
+    DEBUG = False
+    # 실제 운영환경에서는 보안을 위해 SECRET_KEY를 환경 변수로 설정해야 합니다
+
+
+# 환경별 설정 매핑 딕셔너리
+config_by_name = {
+    'dev': DevelopmentConfig,
+    'test': TestingConfig,
+    'prod': ProductionConfig
+}
