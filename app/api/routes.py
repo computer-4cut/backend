@@ -2,6 +2,7 @@ from flask import Blueprint, request, send_file, jsonify, current_app, send_from
 import os
 from app.utils.file_handler import allowed_file, save_uploaded_file, get_file_url
 from app.utils.qr_generator import create_url_qr, create_image_data_qr
+import pathlib
 
 api_bp = Blueprint('api_bp', __name__)
 
@@ -84,3 +85,32 @@ def convert_image_to_data_qr():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/v1/storage/info', methods=['GET'])
+def get_upload_directory_info():
+    try:
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        absolute_path = os.path.abspath(upload_folder)
+        
+        # 디렉토리에 있는 파일들의 목록 가져오기
+        files = [f for f in os.listdir(upload_folder) if os.path.isfile(os.path.join(upload_folder, f))]
+        file_count = len(files)
+        
+        # 디렉토리 사이즈 계산
+        total_size = sum(os.path.getsize(os.path.join(upload_folder, f)) for f in files)
+        
+        # 가독성 있는 사이즈로 변환
+        size_in_mb = total_size / (1024 * 1024)
+        
+        return jsonify({
+            'directory_path': absolute_path,
+            'file_count': file_count,
+            'total_size_bytes': total_size,
+            'total_size_mb': round(size_in_mb, 2),
+            'exists': os.path.exists(upload_folder),
+            'is_directory': os.path.isdir(upload_folder)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'디렉토리 정보를 가져오는 중 오류가 발생했습니다: {str(e)}'}), 500
